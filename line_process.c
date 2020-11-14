@@ -16,15 +16,26 @@
 void* get_input(void*);
 void* put_buff_1(char*);
 char* get_user_input();
+
+
 void* lineSeperator(void*);
 char* do_line(char*);
 char* get_buf_1();
 void* put_buff_2(char*);
 
 
+void* plus(void*);
+char* get_buff_2();
+char* do_plus(char*);
+void* put_buff_3(char*);
+
+
+char* get_buff_3();
+
 char buffer[50000];
 char buffer_1[1000];
 char buffer_2[1000];
+char buffer_3[1000];
 int globalVar = 0;
 
 
@@ -46,6 +57,13 @@ pthread_mutex_t mutex_2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t full_2 = PTHREAD_COND_INITIALIZER;
 
 
+//third thread
+int count_3 = 0;
+int prod_idx_3 = 0;
+int con_ind_3 = 0;
+pthread_mutex_t mutex_3 = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t full_3 = PTHREAD_COND_INITIALIZER;
+
 
 
 
@@ -57,11 +75,12 @@ int main(int argc, char* argv[])
 
 	pthread_create(&input_t, NULL, get_input, NULL);
 	pthread_create(&linSep_t, NULL, lineSeperator, NULL);
-
+	pthread_create(&plus_t, NULL,plus, NULL);
 	
 
 	pthread_join(input_t,NULL);
 	pthread_join(linSep_t,NULL);
+	pthread_join(plus_t,NULL);
 
 
 }
@@ -69,6 +88,106 @@ int main(int argc, char* argv[])
 
 
 
+
+// sets buffer 3 value
+void* put_buff_3(char* x)
+{
+	
+	pthread_mutex_lock(&mutex_3);
+   	strcpy(buffer_3,x);
+  	prod_idx_3 = strlen(buffer_1 + 1);
+	count_3++;
+  	pthread_cond_signal(&full_3);
+   	pthread_mutex_unlock(&mutex_3);
+
+}
+
+
+
+
+
+
+// Changes ++ to ^
+char* do_plus(char* x)
+{
+	char temp_buffer[1000] = {0};
+	char* substring = "++";
+	char* replacement_string = "^";
+	char* insert_point = &temp_buffer[0];
+	const char* temp = x;
+	size_t needle_len = strlen(substring);
+	size_t repl_len = strlen(replacement_string);
+
+	while(1)
+	{
+		const char* p = strstr(temp,substring);
+		if(p == NULL)
+		{
+			strcpy(insert_point,temp);
+			break;
+		}
+
+
+		memcpy(insert_point, temp, p-temp);
+		insert_point += p- temp;
+		
+		memcpy(insert_point,replacement_string,repl_len);
+		insert_point = insert_point + repl_len;
+
+		temp = p + needle_len;
+
+	}
+
+	printf("%s",temp_buffer);
+
+	strcpy(x,temp_buffer);
+	return x;
+	
+}
+
+
+
+
+
+
+
+//Third thread 
+void* plus(void* x)
+{
+
+	put_buff_3(get_buff_2());
+	return NULL;
+}
+
+
+
+
+
+
+//waits for line seperator 
+char* get_buff_2()
+{
+	pthread_mutex_lock(&mutex_2);
+	while(count_2 == 0)
+	{
+		 pthread_cond_wait(&full_2, &mutex_2);
+
+	}
+
+	count_2--;
+	do_plus(buffer_2);
+	pthread_mutex_unlock(&mutex_2);
+	return buffer_2;
+
+	
+	
+
+}
+
+
+
+
+//adds string to second buffer
 void* put_buff_2(char* x)
 {
 	
