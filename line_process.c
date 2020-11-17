@@ -78,13 +78,13 @@ int main(int argc, char* argv[])
 	pthread_create(&input_t, NULL, get_input, NULL);
 	pthread_create(&linSep_t, NULL, lineSeperator, NULL);
 	pthread_create(&plus_t, NULL,plus, NULL);
-//	pthread_create(&output_t, NULL,store_output, NULL);
+	pthread_create(&output_t, NULL,store_output, NULL);
 
 
 	pthread_join(input_t,NULL);
 	pthread_join(linSep_t,NULL);
 	pthread_join(plus_t,NULL);
-//	pthread_join(output_t,NULL);
+	pthread_join(output_t,NULL);
 
 
 }
@@ -117,7 +117,8 @@ void* printStatement(char* x)
 // 4th thread
 
 void* store_output(void* x)
-{
+{	
+
 	while(1)
 	{	
 		get_buff_3();
@@ -143,10 +144,19 @@ char* get_buff_3()
 		 pthread_cond_wait(&full_3, &mutex_3);
 
 	}
-
+	
 	count_3--;
-	pthread_mutex_unlock(&mutex_3);
-	return buffer;
+	char printer [80];
+	char* temp = &buffer_3[con_idx_3];
+	if(strlen(buffer_3) > 80)
+	{
+
+		strncpy(printer, temp,80);
+		con_idx_3 = con_idx_3 + strlen(printer);
+		printf("Print Statement: \n %s \n", printer, strlen(printer));
+		pthread_mutex_unlock(&mutex_3);
+	}
+	return buffer_3;
 
 
 }
@@ -162,17 +172,17 @@ void* put_buff_3(char* x)
 	pthread_mutex_lock(&mutex_3);
 	char* temp = &buffer_3[prod_idx_3];
 	strcpy(temp,x);
-	//do_plus(temp);
   	prod_idx_3 = strlen(buffer_3+1);
-//	if(strlen(prod_idx_3-1) >= 80
-//	{
+	
+	if(prod_idx_3 - con_idx_3 > 80)
+	{	
+		count_3++;
+  		pthread_cond_signal(&full_3);
+	}
+	//	pthread_mutex_unlock(&mutex_3);
+    		pthread_mutex_unlock(&mutex_3);
 
-//	}
-	count_3++;
-	printf("THIS IS IN THE BUFFER:%s",buffer_3);
-  	pthread_cond_signal(&full_3);
-   	pthread_mutex_unlock(&mutex_3);
-
+//	printf("*%s\n", buffer_3);
 }
 
 
@@ -186,7 +196,9 @@ void* put_buff_3(char* x)
 // Changes ++ to ^
 char* do_plus(char* x)
 {
-	char temp_buffer[50000] = {0};
+	
+
+	char temp_buffer[1000] = {0};
 	char* substring = "++";
 	char* replacement_string = "^";
 	char* insert_point = &temp_buffer[0];
@@ -196,7 +208,7 @@ char* do_plus(char* x)
 
 	while(1)
 	{
-		const char* p = strstr(temp,substring);
+		 char* p = strstr(temp,substring);
 		if(p == NULL)
 		{
 			strcpy(insert_point,temp);
@@ -217,6 +229,7 @@ char* do_plus(char* x)
 
 
 	strcpy(x,temp_buffer);
+
 	return x;
 	
 }
@@ -255,7 +268,8 @@ char* get_buff_2()
 
 	count_2--;
 	char* temp = &buffer_2[con_idx_2];
-	con_idx_2 = prod_idx_2; 
+//	printf("In get buff 2 %s", temp);
+	con_idx_2 = prod_idx_2; 	
 	do_plus(temp);
 	pthread_mutex_unlock(&mutex_2);
 	return temp;
@@ -296,12 +310,17 @@ char* get_buff_1()
          pthread_cond_wait(&full_1, &mutex_1);
 
 	 }
-	
+	char* temp;
 	count_1--;
+	 temp = &buffer_1[con_idx_1];
 
-	char* temp = &buffer_1[con_idx_1];
-	temp[strlen(buffer_1+1)] = ' ';
-	con_idx_1 = prod_idx_1;
+//	if(strcmp(buffer_1[strlen(buffer_1+1),"~"))
+
+	buffer_1[prod_idx_1] = '~';
+//	buffer_1[strlen(buffer_1+1)] = '~';
+//	printf("In get buff 1 %s", temp);
+	con_idx_1 = prod_idx_1++;
+//	prod_idx_1 = prod_idx_1++;
 //	buffer_1[con_idx_1] = ' ';
 	pthread_mutex_unlock(&mutex_1);
 	
@@ -351,9 +370,9 @@ void* lineSeperator(void*x)
 char* get_user_input()
 {
 
-    char* user_input = malloc(sizeof(char)*50000);
-    fgets(user_input,50000,stdin);
-	
+    char* user_input = malloc(sizeof(char)*1000);
+	fgets(user_input,1000,stdin);
+
     return user_input;
 }
 
@@ -382,6 +401,7 @@ void* put_buff_1(char* x)
 // //  Lock the mutex before putting the item in the buffer
    pthread_mutex_lock(&mutex_1);
 //   // Put the item in the buffer
+  
    char* temp = &buffer_1[prod_idx_1];
    strcpy(temp,x);	
 //   // Increment the index here the next item will be put.
