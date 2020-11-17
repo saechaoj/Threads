@@ -124,18 +124,21 @@ char* get_buff_3()
 		 pthread_cond_wait(&full_3, &mutex_3);
 
 	}
-	
-	count_3--;
+
 	char printer [80];
 	char* temp = &buffer_3[con_idx_3];
-	if(strlen(buffer_3) > 80)
+	if(strlen(buffer_3) - con_idx_3 > 80)
 	{
 
 		strncpy(printer, temp,80);
 		con_idx_3 = con_idx_3 + strlen(printer);
-		printf("Print Statement:%s\n\n", printer, strlen(printer));
-		pthread_mutex_unlock(&mutex_3);
+		printf("Print Statement:%s\n", printer, strlen(printer));
+	
 	}
+	count_3--;
+
+
+	pthread_mutex_unlock(&mutex_3);
 	return buffer_3;
 
 
@@ -156,7 +159,7 @@ void* put_buff_3(char* x)
 	
 	if(prod_idx_3 - con_idx_3 > 80)
 	{	
-		count_3++;
+		count_3 = prod_idx_3 / 80;
   		pthread_cond_signal(&full_3);
 	}
     		pthread_mutex_unlock(&mutex_3);
