@@ -33,7 +33,6 @@ void* put_buff_3(char*);
 
 char* get_buff_3();
 void* store_output(void*);
-void* printStatement(char*);
 
 char buffer[50000];
 char buffer_1[50000];
@@ -95,25 +94,6 @@ int main(int argc, char* argv[])
 
 
 
-
-
-//checks for 80 chars
-
-void* printStatement(char* x)
-{
-
-	if(strlen(x) == 10)
-	{
-		printf("%s", buffer_3);
-	}
-}
-
-
-
-
-
-
-
 // 4th thread
 
 void* store_output(void* x)
@@ -153,7 +133,7 @@ char* get_buff_3()
 
 		strncpy(printer, temp,80);
 		con_idx_3 = con_idx_3 + strlen(printer);
-		printf("Print Statement: \n %s \n", printer, strlen(printer));
+		printf("Print Statement:%s\n\n", printer, strlen(printer));
 		pthread_mutex_unlock(&mutex_3);
 	}
 	return buffer_3;
@@ -179,10 +159,8 @@ void* put_buff_3(char* x)
 		count_3++;
   		pthread_cond_signal(&full_3);
 	}
-	//	pthread_mutex_unlock(&mutex_3);
     		pthread_mutex_unlock(&mutex_3);
 
-//	printf("*%s\n", buffer_3);
 }
 
 
@@ -268,7 +246,6 @@ char* get_buff_2()
 
 	count_2--;
 	char* temp = &buffer_2[con_idx_2];
-//	printf("In get buff 2 %s", temp);
 	con_idx_2 = prod_idx_2; 	
 	do_plus(temp);
 	pthread_mutex_unlock(&mutex_2);
@@ -300,7 +277,7 @@ void* put_buff_2(char* x)
 
 
 
-//waits for first thread to finish then calls function to swap \n then returns line
+//waits for first thread then accesses memory to swap \n then returns line
 char* get_buff_1()
 {
 	pthread_mutex_lock(&mutex_1);
@@ -310,40 +287,20 @@ char* get_buff_1()
          pthread_cond_wait(&full_1, &mutex_1);
 
 	 }
+
+
 	char* temp;
 	count_1--;
 	 temp = &buffer_1[con_idx_1];
 
-//	if(strcmp(buffer_1[strlen(buffer_1+1),"~"))
 
 	buffer_1[prod_idx_1] = '~';
-//	buffer_1[strlen(buffer_1+1)] = '~';
-//	printf("In get buff 1 %s", temp);
 	con_idx_1 = prod_idx_1++;
-//	prod_idx_1 = prod_idx_1++;
-//	buffer_1[con_idx_1] = ' ';
 	pthread_mutex_unlock(&mutex_1);
 	
 	return temp;
       
 }
-
-
-
-
-
-
-
-//gets ride of \n
-char* do_line(char* x)
-{
-
-	x[con_idx_1] = ' ';
-	return x;
-
-}
-
-
 
 
 
@@ -370,8 +327,9 @@ void* lineSeperator(void*x)
 char* get_user_input()
 {
 
-    char* user_input = malloc(sizeof(char)*1000);
-	fgets(user_input,1000,stdin);
+    char* user_input = malloc(sizeof(char)*50000);
+	fgets(user_input,50000,stdin);
+	fflush(stdin);
 
     return user_input;
 }
